@@ -44,9 +44,7 @@ graph_builder.add_edge("tools", "model")
 
 graph = graph_builder.compile(checkpointer=memory)
 
-# -------------------------------
-# FastAPI app and CORS
-# -------------------------------
+
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
@@ -57,9 +55,6 @@ app.add_middleware(
     expose_headers=["Content-Type"], 
 )
 
-# -------------------------------
-# Helper to serialize chunks
-# -------------------------------
 def serialise_ai_message_chunk(chunk): 
     if isinstance(chunk, AIMessageChunk):
         return chunk.content
@@ -68,9 +63,6 @@ def serialise_ai_message_chunk(chunk):
             f"Object of type {type(chunk).__name__} is not correctly formatted for serialisation"
         )
 
-# -------------------------------
-# SSE Streaming generator
-# -------------------------------
 async def generate_chat_responses(message: str, checkpoint_id: Optional[str] = None):
     is_new_conversation = checkpoint_id is None
     
@@ -82,7 +74,6 @@ async def generate_chat_responses(message: str, checkpoint_id: Optional[str] = N
             version="v2",
             config=config
         )
-        # Send checkpoint ID first
         yield f"data: {{\"type\": \"checkpoint\", \"checkpoint_id\": \"{new_checkpoint_id}\"}}\n\n"
     else:
         config = {"configurable": {"thread_id": checkpoint_id}}
@@ -114,9 +105,7 @@ async def generate_chat_responses(message: str, checkpoint_id: Optional[str] = N
     
     yield f"data: {{\"type\": \"end\"}}\n\n"
 
-# -------------------------------
-# SSE endpoint
-# -------------------------------
+
 @app.get("/chat_stream/{message}")
 async def chat_stream(message: str, checkpoint_id: Optional[str] = Query(None)):
     return StreamingResponse(
